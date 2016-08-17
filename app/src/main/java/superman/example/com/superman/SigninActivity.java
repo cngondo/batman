@@ -67,8 +67,30 @@ public class SigninActivity extends FragmentActivity implements ConnectionCallba
         mGoogleApiClient.connect();
     }
 
+    /*
+    * Handle the click events in the app from the views
+    * */
     @Override
     public void onClick(View view) {
+        if(!mGoogleApiClient.isConnecting()){
+            switch (view.getId()){
+                case R.id.sign_in_button:
+                    mStatus.setText("Signing in...chill kiasi...");
+                    resolveSignInError();
+                    break;
+                case R.id.sign_out_button:
+                    Plus.AccountApi.clearDefaultAccount(mGoogleApiClient);
+                    mGoogleApiClient.disconnect();
+                    mGoogleApiClient.connect();
+                    break;
+                case R.id.revoke_access_button:
+                    Plus.AccountApi.clearDefaultAccount(mGoogleApiClient);
+                    Plus.AccountApi.revokeAccessAndDisconnect(mGoogleApiClient);
+                    mGoogleApiClient = buildGoogleAPIClient();
+                    mGoogleApiClient.connect();
+                    break;
+            }
+        }
 
     }
 
@@ -119,8 +141,7 @@ public class SigninActivity extends FragmentActivity implements ConnectionCallba
         if(mSignInIntent != null){
             try{
                 mSignInProgress = STATE_IN_PROGRESS;
-                startIntentSenderForResult(mSignInIntent.getIntentSender(), RC_SIGN_IN, null
-                0,0,0);
+                startIntentSenderForResult(mSignInIntent.getIntentSender(), RC_SIGN_IN, null, 0,0,0);
             }catch (IntentSender.SendIntentException e){
                 mSignInProgress = STATE_SIGNING_IN;
                 mGoogleApiClient.connect();
@@ -148,7 +169,11 @@ public class SigninActivity extends FragmentActivity implements ConnectionCallba
 
     private void onSignedOut(){
         //update UI to reflect the changes first
+        mSignInButton.setEnabled(true);
+        mSignOutButton.setEnabled(false);
+        mRevokeButton.setEnabled(false);
 
+        mStatus.setText("Signed out");
     }
 
     /*
@@ -168,7 +193,7 @@ public class SigninActivity extends FragmentActivity implements ConnectionCallba
     protected void onStop() {
         super.onStop();
         /*
-        * disconnect when the activity stops
+        * Disconnect when the activity stops
         * */
         mGoogleApiClient.disconnect();
     }
